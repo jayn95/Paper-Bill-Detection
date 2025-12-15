@@ -86,3 +86,7 @@ async def detect_bill(file: UploadFile = File(...), coins: str = Form(None)):
         "bills_detected": bills_detected,
         "coin_change": coin_change
     }
+
+@app.get("/about", response_class=HTMLResponse)
+def about(request: Request):
+    return templates.TemplateResponse("about.html", {"request": request})

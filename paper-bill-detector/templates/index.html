@@ -8,25 +8,40 @@
     <title>Paper Bill Detector</title>
 </head>
 <body>
-    <div class="container">
-        <h1>Paper Bill Detector</h1>
-        <p>Upload an image of paper bills to compute the total amount and exact coin change.</p>
+    <header class="header">
+        <div class="nav-container">
+            <div class="logo">
+                <span class="logo-icon"><img src="/static/images/logo.png" alt="Logo"></span>
+                <span class="logo-text">NoteVision</span>
+            </div>
 
-        <input type="file" id="imageInput" accept="image/*" />
-
-        <div>
-            <p>Select only one of the coins to use for change:</p>
-            <label><input type="checkbox" class="coinCheckbox" value="20" checked> 20</label>
-            <label><input type="checkbox" class="coinCheckbox" value="10" checked> 10</label>
-            <label><input type="checkbox" class="coinCheckbox" value="5" checked> 5</label>
-            <label><input type="checkbox" class="coinCheckbox" value="1" checked> 1</label>
+            <nav class="nav-links">
+                <a href="/">Home</a>
+                <a href="/about">About</a>
+            </nav>
         </div>
+    </header>
+    <div class="main-content">
+        <div class="home-container">
+            <h1>NoteVision</h1>
+            <p>Upload an image of paper bills to compute the total amount and exact coin change.</p>
 
-        <button id="detectBtn" disabled>Detect & Compute</button>
+            <input type="file" id="imageInput" accept="image/*" />
 
-        <div class="preview" id="preview"></div>
-        <div class="loading" id="loading" style="display:none;">Processing image...</div>
-        <div class="results" id="results"></div>
+            <div>
+                <p>Select only one of the coins to use for change:</p>
+                <label><input type="checkbox" class="coinCheckbox" value="20" checked> 20</label>
+                <label><input type="checkbox" class="coinCheckbox" value="10" checked> 10</label>
+                <label><input type="checkbox" class="coinCheckbox" value="5" checked> 5</label>
+                <label><input type="checkbox" class="coinCheckbox" value="1" checked> 1</label>
+            </div>
+
+            <button id="detectBtn" disabled>Detect & Compute</button>
+
+            <div class="preview" id="preview"></div>
+            <div class="loading" id="loading" style="display:none;">Processing image...</div>
+            <div class="results" id="results"></div>
+        </div>
     </div>
 
     <script>
