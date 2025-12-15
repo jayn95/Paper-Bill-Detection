@@ -6,3 +6,5 @@ numpy
 opencv-python-headless
 python-multipart
 gunicorn
+jinja2
+aiofiles
