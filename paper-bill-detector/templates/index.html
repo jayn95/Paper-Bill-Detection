@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://fonts.googleapis.com/css2?family=Slackey&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
     <script src="/static/script.js" defer></script>
-    <title>Paper Bill Detector</title>
+    <title>Pa Barya</title>
 </head>
 <body>
     <header class="header">
         <div class="nav-container">
             <div class="logo">
-                <span class="logo-icon"><img src="/static/images/logo.png" alt="Logo"></span>
-                <span class="logo-text">NoteVision</span>
+                <span class="logo-text">Pa Barya</span>
             </div>
 
             <nav class="nav-links">
@@ -21,117 +21,49 @@
             </nav>
         </div>
     </header>
-    <div class="main-content">
-        <div class="home-container">
-            <h1>NoteVision</h1>
-            <p>Upload an image of paper bills to compute the total amount and exact coin change.</p>
+    <div class="machine">
+        <div class="machine-border">
+            <h1 class="title">Pa Barya</h1>
+            <p class="subtitle">Welcome to Pa Barya – your personal coin dispenser! Simply upload an image of your peso bill, and we’ll break it down into coins instantly. Choose your preferred coins and get ready for hassle-free change!</p>
 
-            <input type="file" id="imageInput" accept="image/*" />
+            <!-- Upload -->
+            <div id="uploadSection" class="panel upload-panel">
+                <label class="upload-label">
+                    <input type="file" id="fileInput" accept="image/*" hidden>
 
-            <div>
-                <p>Select only one of the coins to use for change:</p>
-                <label><input type="checkbox" class="coinCheckbox" value="20" checked> 20</label>
-                <label><input type="checkbox" class="coinCheckbox" value="10" checked> 10</label>
-                <label><input type="checkbox" class="coinCheckbox" value="5" checked> 5</label>
-                <label><input type="checkbox" class="coinCheckbox" value="1" checked> 1</label>
+                    <p class="upload-main">INSERT BILL</p>
+                    <p class="upload-sub">Tap to upload image</p>
+                </label>
             </div>
 
-            <button id="detectBtn" disabled>Detect & Compute</button>
+            <!-- Preview -->
+            <div id="previewSection" class="panel hidden">
+            <img id="billImage" alt="Upload Bill preview">
+            <div id="detectBox" class="detect-box">SCANNING...</div>
+            </div>
+
+            <div id="coinSelection" class="panel">
+                <p class="question">
+                    SELECT COINS
+                </p>
+
+                <div class="coins">
+                    <button class="coin" data-value="10">₱10</button>
+                    <button class="coin" data-value="5">₱5</button>
+                    <button class="coin" data-value="1">₱1</button>
+                </div>
+            </div>
+
+            <button id="detectBtn" disabled class="action-btn">DISPENSE COINS</button>
 
             <div class="preview" id="preview"></div>
-            <div class="loading" id="loading" style="display:none;">Processing image...</div>
-            <div class="results" id="results"></div>
+            <div class="loading" id="loading" style="display:none;">Loading...</div>
+            <div class="results" id="results" style="display:none;"></div>
+
+            <button id="resetBtn" class="reset-btn hidden">
+                NEW TRANSACTION
+            </button>
         </div>
     </div>
-
-    <script>
-        const imageInput = document.getElementById('imageInput');
-        const detectBtn = document.getElementById('detectBtn');
-        const preview = document.getElementById('preview');
-        const results = document.getElementById('results');
-        const loading = document.getElementById('loading');
-        const coinCheckboxes = document.querySelectorAll('.coinCheckbox');
-
-        let selectedFile = null;
-
-        imageInput.addEventListener('change', () => {
-            selectedFile = imageInput.files[0];
-            results.innerHTML = '';
-
-            if (!selectedFile) {
-                detectBtn.disabled = true;
-                preview.innerHTML = '';
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = () => {
-                preview.innerHTML = `<img src="${reader.result}" alt="Preview">`;
-            };
-            reader.readAsDataURL(selectedFile);
-
-            detectBtn.disabled = false;
-        });
-
-        detectBtn.addEventListener('click', async () => {
-            if (!selectedFile) return;
-
-            loading.style.display = 'block';
-            detectBtn.disabled = true;
-            results.innerHTML = '';
-
-            // Collect selected coins
-            const selectedCoins = Array.from(coinCheckboxes)
-                .filter(c => c.checked)
-                .map(c => c.value)
-                .join(',');
-
-            const formData = new FormData();
-            formData.append('file', selectedFile);
-            if (selectedCoins) formData.append('coins', selectedCoins);
-
-            try {
-                const response = await fetch('/detect', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                loading.style.display = 'none';
-                detectBtn.disabled = false;
-
-                if (data.message) {
-                    results.innerHTML = `<p>${data.message}</p>`;
-                    return;
-                }
-
-                let billsHtml = '<ul>';
-                for (const bill in data.bills_detected) {
-                    billsHtml += `<li>₱${bill}: ${data.bills_detected[bill]}</li>`;
-                }
-                billsHtml += '</ul>';
-
-                let coinsHtml = '<ul>';
-                for (const coin in data.coin_change) {
-                    coinsHtml += `<li>₱${coin}: ${data.coin_change[coin]}</li>`;
-                }
-                coinsHtml += '</ul>';
-
-                results.innerHTML = `
-                    <h3>Total Amount: ₱${data.total_amount}</h3>
-                    <h4>Bills Detected</h4>
-                    ${billsHtml}
-                    <h4>Exact Coin Change</h4>
-                    ${coinsHtml}
-                `;
-
-            } catch (error) {
-                loading.style.display = 'none';
-                detectBtn.disabled = false;
-                results.innerHTML = '<p>Error processing image.</p>';
-            }
-        });
-    </script>
 </body>
 </html>

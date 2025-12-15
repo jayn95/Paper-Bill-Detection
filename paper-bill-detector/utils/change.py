@@ -1,8 +1,20 @@
 # utils/change.py
 
 # Default coin denominations (PHP example)
-DEFAULT_COINS = [20, 10, 5, 1]
+DEFAULT_COINS = [10, 5, 1]
 
+# Map YOLO class names → numeric values
+DENOMINATION_MAP = {
+    "one thousand": 1000,
+    "five hundred": 500,
+    "two hundred": 200,
+    "one hundred": 100,
+    "fifty": 50,
+    "twenty": 20,
+    "ten": 10,
+    "five": 5,
+    "one": 1,
+}
 
 def aggregate_bills(detections):
     """
@@ -20,7 +32,17 @@ def compute_total_amount(bills_detected):
     """
     Compute total monetary value from detected bills.
     """
-    return sum(int(k) * v for k, v in bills_detected.items())
+    total = 0
+
+    for label, count in bills_detected.items():
+        value = DENOMINATION_MAP.get(label.lower())
+
+        if value is None:
+            raise ValueError(f"Unknown bill denomination: {label}")
+
+        total += value * count
+
+    return total
 
 
 def compute_change(amount: int, coins=None):

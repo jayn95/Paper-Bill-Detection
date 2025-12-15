@@ -35,6 +35,20 @@ templates = Jinja2Templates(directory="templates")
 MODEL_PATH = "model/best.pt"
 bill_detector = BillDetector(MODEL_PATH)
 
+MAX_FILE_SIZE = 5 * 1024 * 1024
+ALLOWED_CONTENT_TYPES = {
+    "image/jpeg",
+    "image/png",
+    "image/jpg"
+}
+
+def minimal_preprocess(image: Image.Image) -> Image.Image:
+    try:
+        image = ImageOps.exif_transpose(image)
+    except Exception:
+        pass
+    return image.convert("RGB")
+
 # =========================
 # Routes
 # =========================
@@ -45,7 +59,7 @@ def index(request: Request):
 @app.post("/detect")
 async def detect_bill(file: UploadFile = File(...), coins: str = Form(None)):
     # Validate file type
-    if not file.content_type.startswith("image/"):
+    if file.content_type not in ALLOWED_CONTENT_TYPES:
         return JSONResponse(
             status_code=400,
             content={"error": "Invalid file type. Please upload an image."}
@@ -53,7 +67,22 @@ async def detect_bill(file: UploadFile = File(...), coins: str = Form(None)):
 
     # Read image
     image_bytes = await file.read()
-    image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+
+    if len(image_bytes) > MAX_FILE_SIZE:
+        return JSONResponse(
+            status_code=400,
+            content={"error": "File too large. Maximum size is 5MB."}
+        )
+
+    try:
+        image = Image.open(io.BytesIO(image_bytes))
+    except Exception:
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Uploaded file is not a valid image."}
+        )
+
+    image = minimal_preprocess(image)
 
     # Run detection
     detected_classes = bill_detector.detect(image)
@@ -90,3 +119,10 @@ async def detect_bill(file: UploadFile = File(...), coins: str = Form(None)):
 @app.get("/about", response_class=HTMLResponse)
 def about(request: Request):
     return templates.TemplateResponse("about.html", {"request": request})
+
+if __name__ == "__main__":
+    import os
+    import uvicorn
+
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("app:app", host="0.0.0.0", port=port)
