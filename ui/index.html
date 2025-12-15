@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pa Barya</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Slackey&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="machine">
+  <div class="machine-border">
+
+    <h1 class="title">Pa Barya</h1>
+    <p class="subtitle">Welcome to Pa Barya – your personal coin dispenser! Simply upload an image of your peso bill, and we’ll break it down into coins instantly. Choose your preferred coins and get ready for hassle-free change!</p>
+
+    <!-- Upload -->
+    <div id="uploadSection" class="panel upload-panel">
+      <input type="file" id="fileInput" accept="image/*" hidden>
+      <label for="fileInput">
+        <p class="upload-main">INSERT BILL</p>
+        <p class="upload-sub">Tap to upload image</p>
+      </label>
+    </div>
+
+    <!-- Preview -->
+    <div id="previewSection" class="panel hidden">
+      <img id="billImage">
+      <div id="detectBox" class="detect-box">SCANNING...</div>
+    </div>
+
+    <!-- Coins -->
+    <div id="coinSection" class="panel hidden">
+      <p class="question">
+        Detected <span id="billValue"></span><br>
+        SELECT COINS
+      </p>
+
+      <div class="coins">
+        <button class="coin" data-value="10">₱10</button>
+        <button class="coin" data-value="5">₱5</button>
+        <button class="coin" data-value="1">₱1</button>
+      </div>
+
+      <button id="calculateBtn" disabled class="action-btn">
+        DISPENSE COINS
+      </button>
+    </div>
+
+    <!-- Result -->
+    <div id="resultSection" class="panel hidden"></div>
+
+    <button id="resetBtn" class="reset-btn hidden">
+      NEW TRANSACTION
+    </button>
+
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
