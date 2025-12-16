@@ -13,7 +13,7 @@ body {
     background-repeat: no-repeat; /* Prevent tiling */
     background-attachment: fixed; /* Keep it fixed while scrolling */
     min-height: 100vh;           /* Ensure it covers full viewport height */
-    font-family: 'Inter', sans-serif; /* Nice clean font for all text */
+    font-family: 'Roboto', sans-serif; /* Nice clean font for all text */
     color: #111;                  /* Default text color */
 }
 
