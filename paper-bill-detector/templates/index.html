@@ -26,7 +26,7 @@
             <h1>NoteVision</h1>
             <p>Upload an image of paper bills to compute the total amount and exact coin change.</p>
 
-            <input type="file" id="imageInput" accept="image/*" />
+           <input type="file" id="imageInput" accept="image/jpeg,image/png" />
 
             <div>
                 <p>Select only one of the coins to use for change:</p>
@@ -36,7 +36,7 @@
                 <label><input type="checkbox" class="coinCheckbox" value="1" checked> 1</label>
             </div>
 
-            <button id="detectBtn" disabled>Detect & Compute</button>
+            <button id="detectBtn" type="button" disabled>Detect & Compute</button>
 
             <div class="preview" id="preview"></div>
             <div class="loading" id="loading" style="display:none;">Processing image...</div>

@@ -1,30 +1,64 @@
+<script>
 const imageInput = document.getElementById('imageInput');
 const detectBtn = document.getElementById('detectBtn');
 const preview = document.getElementById('preview');
 const results = document.getElementById('results');
 const loading = document.getElementById('loading');
+const coinCheckboxes = document.querySelectorAll('.coinCheckbox');
 
 let selectedFile = null;
 
+// ✅ Only these formats are allowed for detection
+const ALLOWED_TYPES = ['image/jpeg', 'image/png'];
+
+/* ----------------------------
+   Enforce ONE coin selection
+-----------------------------*/
+coinCheckboxes.forEach(box => {
+    box.addEventListener('change', () => {
+        if (box.checked) {
+            coinCheckboxes.forEach(b => {
+                if (b !== box) b.checked = false;
+            });
+        }
+    });
+});
+
+/* ----------------------------
+   File selection
+-----------------------------*/
 imageInput.addEventListener('change', () => {
     selectedFile = imageInput.files[0];
+    preview.innerHTML = '';
     results.innerHTML = '';
+    detectBtn.disabled = true;
 
-    if (!selectedFile) {
-        detectBtn.disabled = true;
-        preview.innerHTML = '';
+    if (!selectedFile) return;
+
+    // ❌ NOT JPG / PNG → BLOCK DETECTION
+    if (!ALLOWED_TYPES.includes(selectedFile.type)) {
+        results.innerHTML = `
+            <p style="color:red;">
+                Unsupported image format.<br>
+                Please upload a JPG or PNG file.
+            </p>
+        `;
         return;
     }
 
+    // ✅ Preview only for valid images
     const reader = new FileReader();
     reader.onload = () => {
-        preview.innerHTML = `<img src="${reader.result}" alt="Image preview">`;
+        preview.innerHTML = `<img src="${reader.result}" alt="Preview">`;
     };
     reader.readAsDataURL(selectedFile);
 
     detectBtn.disabled = false;
 });
 
+/* ----------------------------
+   Detect & Compute
+-----------------------------*/
 detectBtn.addEventListener('click', async () => {
     if (!selectedFile) return;
 
@@ -32,8 +66,13 @@ detectBtn.addEventListener('click', async () => {
     detectBtn.disabled = true;
     results.innerHTML = '';
 
+    // ✅ Selected coin
+    const selectedCoin = Array.from(coinCheckboxes)
+        .find(c => c.checked)?.value;
+
     const formData = new FormData();
     formData.append('file', selectedFile);
+    if (selectedCoin) formData.append('coins', selectedCoin);
 
     try {
         const response = await fetch('/detect', {
@@ -46,21 +85,31 @@ detectBtn.addEventListener('click', async () => {
         loading.style.display = 'none';
         detectBtn.disabled = false;
 
+        // ❌ Backend error
+        if (!response.ok) {
+            results.innerHTML = `
+                <p style="color:red;">
+                    ${data.error || 'Upload failed.'}
+                </p>
+            `;
+            return;
+        }
+
         if (data.message) {
             results.innerHTML = `<p>${data.message}</p>`;
             return;
         }
 
         let billsHtml = '<ul>';
-        for (const bill in data.bills_detected) {
-            billsHtml += `<li>₱${bill}: ${data.bills_detected[bill]}</li>`;
-        }
+        Object.entries(data.bills_detected).forEach(([bill, count]) => {
+            billsHtml += `<li>₱${bill}: ${count}</li>`;
+        });
         billsHtml += '</ul>';
 
         let coinsHtml = '<ul>';
-        for (const coin in data.coin_change) {
-            coinsHtml += `<li>₱${coin}: ${data.coin_change[coin]}</li>`;
-        }
+        Object.entries(data.coin_change).forEach(([coin, count]) => {
+            coinsHtml += `<li>₱${coin}: ${count}</li>`;
+        });
         coinsHtml += '</ul>';
 
         results.innerHTML = `
@@ -74,6 +123,11 @@ detectBtn.addEventListener('click', async () => {
     } catch (error) {
         loading.style.display = 'none';
         detectBtn.disabled = false;
-        results.innerHTML = '<p>Failed to process image.</p>';
+        results.innerHTML = `
+            <p style="color:red;">
+                Error processing image.
+            </p>
+        `;
     }
 });
+</script>

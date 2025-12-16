@@ -25,12 +25,12 @@ templates = Jinja2Templates(directory="templates")
 MODEL_PATH = "model/best.pt"
 bill_detector = BillDetector(MODEL_PATH)
 
-MAX_FILE_SIZE = 5 * 1024 * 1024
-ALLOWED_CONTENT_TYPES = {
-    "image/jpeg",
-    "image/png",
-    "image/jpg"
-}
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+
+# ✅ STRICT backend formats
+ALLOWED_MIME_TYPES = {"image/jpeg", "image/png"}
+ALLOWED_PIL_FORMATS = {"JPEG", "PNG"}
+
 
 def minimal_preprocess(image: Image.Image) -> Image.Image:
     try:
@@ -39,32 +39,64 @@ def minimal_preprocess(image: Image.Image) -> Image.Image:
         pass
     return image.convert("RGB")
 
+
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
+
 @app.post("/detect")
-async def detect_bill(file: UploadFile = File(...), coins: str = Form(None)):
-    if file.content_type not in ALLOWED_CONTENT_TYPES:
+async def detect_bill(
+    file: UploadFile = File(...),
+    coins: str = Form(None)
+):
+
+    # ❌ MIME check (browser lies sometimes, but still UX)
+    if file.content_type not in ALLOWED_MIME_TYPES:
         return JSONResponse(
             status_code=400,
-            content={"error": "Invalid file type. Only PNG and JPG images are allowed."}
+            content={"error": "Unsupported file type. Only JPG and PNG are allowed."}
         )
 
     image_bytes = await file.read()
 
+    if not image_bytes:
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Empty file uploaded."}
+        )
+
     if len(image_bytes) > MAX_FILE_SIZE:
         return JSONResponse(
             status_code=400,
-            content={"error": "File too large. Maximum size is 5MB."}
+            content={"error": "File too large. Max 5MB."}
         )
 
+    # ✅ Real image validation
     try:
         image = Image.open(io.BytesIO(image_bytes))
+        image.verify()
     except Exception:
         return JSONResponse(
             status_code=400,
-            content={"error": "Uploaded file is not a valid image."}
+            content={"error": "File is not a valid image."}
+        )
+
+    # 🔁 PIL requires reopen
+    image = Image.open(io.BytesIO(image_bytes))
+
+    # ❌ HARD BLOCK WEBP / HEIC / AVIF / TIFF
+    if image.format not in ALLOWED_PIL_FORMATS:
+        return JSONResponse(
+            status_code=400,
+            content={"error": f"Unsupported image format ({image.format}). Only JPG and PNG allowed."}
+        )
+
+    # ❌ DoS protection
+    if image.width * image.height > 20_000_000:
+        return JSONResponse(
+            status_code=400,
+            content={"error": "Image resolution too large."}
         )
 
     image = minimal_preprocess(image)
@@ -76,19 +108,16 @@ async def detect_bill(file: UploadFile = File(...), coins: str = Form(None)):
             "total_amount": 0,
             "bills_detected": {},
             "coin_change": {},
-            "message": "No paper bills detected"
+            "message": "No paper bills detected."
         }
 
     bills_detected = aggregate_bills(detected_classes)
     total_amount = compute_total_amount(bills_detected)
 
+    # Coins parsing
+    coins_list = None
     if coins:
-        try:
-            coins_list = [int(c.strip()) for c in coins.split(',') if c.strip().isdigit()]
-        except ValueError:
-            coins_list = None
-    else:
-        coins_list = None
+        coins_list = [int(c) for c in coins.split(",") if c.isdigit()]
 
     coin_change = compute_change(total_amount, coins=coins_list)
 
@@ -97,6 +126,7 @@ async def detect_bill(file: UploadFile = File(...), coins: str = Form(None)):
         "bills_detected": bills_detected,
         "coin_change": coin_change
     }
+
 
 @app.get("/about", response_class=HTMLResponse)
 def about(request: Request):
